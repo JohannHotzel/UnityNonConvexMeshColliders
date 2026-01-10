@@ -13,6 +13,8 @@ The focus is on:
 - **Minimal assumptions about mesh topology**
 
 ---
+▶ **Demo:**  https://www.youtube.com/shorts/yHOCyl136nw
+---
 ![Collider Types](Demo/Images/ColliderTypesAnotation.png)
 ![How To Use](Demo/Images/Tutorial.png)
 
