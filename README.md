@@ -1,11 +1,14 @@
 # Unity Non-Convex Mesh Colliders
 ### Non-convex collider approximations that work with rigid bodies
 ====================================================================
+
 ***Notice this is a fork used to convert the original project (HERE)[https://github.com/JohannHotzel/UnityNonConvexMeshColliders] to a pure CSharp implementation, with a helper for baking the components***
 The main reason is to allow a more versatile approach in providing mesh data, allowing a user to provide specific triangles and/or parts of a mesh.
 
 There is no guarentee this will be as up to date as the main fork above, though I will do my best.
+
 =====================================================================
+
 This project provides **three different approaches** to approximate **non-convex MeshColliders** in Unity **while remaining compatible with rigid bodies**.
 
 Unity does not allow non-convex MeshColliders on non-kinematic rigid bodies.  
@@ -103,6 +106,7 @@ The points can optionally be inset along triangle normals to avoid surface penet
 - These are **approximations**, not exact replacements
 - Very small voxel sizes may lead to high collider counts
 - Convex MeshColliders still inherit Unity’s convex hull limitations
+
 
 
 
