@@ -1,7 +1,4 @@
-using System.Collections.Generic;
-using UnityEditor.EditorTools;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 [ExecuteAlways]
 [RequireComponent(typeof(MeshFilter))]
@@ -24,7 +21,7 @@ public class VoxelCollider : NonConvexCollider<VoxelizedUserSettings, VoxelizedC
 
         MeshFilter mf = GetComponent<MeshFilter>();
         if(mf == null || mf.sharedMesh == null) {
-            Debug.LogWarning("VoxelColliderTest: No MeshFilter / Mesh found on this GameObject.");
+            Debug.LogWarning("VoxelCollider: No MeshFilter / Mesh found on this GameObject.");
             return;
         }
 
@@ -40,10 +37,10 @@ public class VoxelCollider : NonConvexCollider<VoxelizedUserSettings, VoxelizedC
         voxelCreator.BakeCollider(meshData, settings);
         stopwatch.Stop();
         if(TimeIt) {
-            Debug.Log($"VoxelColliderTest: Voxel collider generation took {stopwatch.ElapsedMilliseconds} ms.");
+            Debug.Log($"VoxelCollider: Voxel collider generation took {stopwatch.ElapsedMilliseconds} ms.");
         }
         if(PrintCreatedPoints) {
-            Debug.Log($"VoxelColliderTest: Generated {colliderData.VoxelCenters.Count} filled voxels.");
+            Debug.Log($"VoxelCollider: Generated {colliderData.VoxelCenters.Count} filled voxels.");
         }
         
         if(GenerateColliders) {
@@ -53,7 +50,7 @@ public class VoxelCollider : NonConvexCollider<VoxelizedUserSettings, VoxelizedC
             GenerateCollisionColliders();
             stopwatch.Stop();
             if(TimeIt) {
-                Debug.Log($"VoxelColliderTest: Collision Creation took {stopwatch.ElapsedMilliseconds} ms.");
+                Debug.Log($"VoxelCollider: Collision Creation took {stopwatch.ElapsedMilliseconds} ms.");
             }
         }
 
