@@ -1,0 +1,16 @@
+{
+    "name": "NonConvex.Components",
+    "rootNamespace": "",
+    "references": [
+        "GUID:91d1fa654b9e2aa4fb0663ccb825fde4"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
