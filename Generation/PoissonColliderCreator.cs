@@ -4,8 +4,9 @@ using UnityEngine;
 
 public class PoissonColliderCreator : ColliderCreator<PoissonColliderData> {
     public Transform tr;
+    
 
-    public PoissonColliderCreator(Transform transform, PoissonColliderData colliderData = null) {
+    public PoissonColliderCreator(Transform transform = null, PoissonColliderData colliderData = null) {
         tr = transform;
         if(colliderData != null) {
             SetColliderData(colliderData);
@@ -13,6 +14,22 @@ public class PoissonColliderCreator : ColliderCreator<PoissonColliderData> {
             SetColliderData(new PoissonColliderData());
         }
 
+    }
+    public void MergeWith(PoissonColliderCreator other) {
+        if (other == null || other.GetColliderData() == null || GetColliderData() == null) {
+            Debug.LogWarning("Cannot merge PoissonColliderCreators: one of them has null data.");
+            return;
+        }
+        PoissonColliderData otherData = other.GetColliderData();
+        PoissonColliderData thisData = GetColliderData();
+
+        if (otherData.Points != null) {
+            if (thisData.Points == null) {
+                thisData.Points = new List<Vector3>(otherData.Points);
+            } else {
+                thisData.Points.AddRange(otherData.Points);
+            }
+        }
     }
 
     
@@ -22,7 +39,7 @@ public class PoissonColliderCreator : ColliderCreator<PoissonColliderData> {
     /// <param name="meshData"></param>
     /// <param name="settings"></param>
     public override void BakeCollider(MeshColliderData meshData, UserSettings settings) {
-        
+        System.Random rand = new System.Random(42); // Fixed seed for reproducibility
         if(!VerifyType(settings)) {
             Debug.LogError("PoissonColliderCreator: UserSettings type does not match ColliderData type.");
             return;
@@ -70,7 +87,7 @@ public class PoissonColliderCreator : ColliderCreator<PoissonColliderData> {
         {
             attempts++;
 
-            int triIndex = PickTriangleIndex(cdf, UnityEngine.Random.value);
+            int triIndex = PickTriangleIndex(cdf, (float)rand.NextDouble());
             
             int i0 = t[triIndex * 3 + 0];
             int i1 = t[triIndex * 3 + 1];
@@ -80,7 +97,7 @@ public class PoissonColliderCreator : ColliderCreator<PoissonColliderData> {
             Vector3 bL = v[i1];
             Vector3 cL = v[i2];
 
-            Vector3 pL = SamplePointInTriangle(ref aL, ref bL,  ref cL);
+            Vector3 pL = SamplePointInTriangle(ref aL, ref bL,  ref cL, ref rand);
             // Vector3 pW = tr.TransformPoint(pL);
 
 
@@ -122,6 +139,7 @@ public class PoissonColliderCreator : ColliderCreator<PoissonColliderData> {
                 pointsWorld.Add(pL);
             }
         }
+        // Debug.Log($"PoissonColliderCreator: Generated {pointsWorld.Count} points after {attempts} attempts.");
     }
 
 
@@ -189,11 +207,11 @@ public class PoissonColliderCreator : ColliderCreator<PoissonColliderData> {
     /// <summary>
     /// Uniformly samples a random point inside a triangle using barycentric coordinates.
     /// </summary>
-    private static Vector3 SamplePointInTriangle(ref Vector3 a, ref Vector3 b, ref Vector3 c)
+    private static Vector3 SamplePointInTriangle(ref Vector3 a, ref Vector3 b, ref Vector3 c, ref System.Random rand)
     {
-        float u = UnityEngine.Random.value;
-        float v = UnityEngine.Random.value;
 
+        float u = (float)rand.NextDouble();
+        float v = (float)rand.NextDouble();
         if (u + v > 1f)
         {
             u = 1f - u;
@@ -210,7 +228,7 @@ public class PoissonColliderCreator : ColliderCreator<PoissonColliderData> {
 #region Data Types
 public  class PoissonColliderData : ColliderData {
     public List<SphereCollider> SphereColliders;
-    public IList<Vector3> Points;
+    public List<Vector3> Points;
 
 
     public PoissonColliderData() {
@@ -229,6 +247,7 @@ public  class PoissonColliderData : ColliderData {
             sc.isTrigger = poissonSettings.isTrigger;
         }
     }
+    
 }
 [Serializable]
 public class PoissonUserSettings : UserSettings {

@@ -142,6 +142,7 @@ public class DecompositionColliderCreator : ColliderCreator<DecompositionCollide
 
             // Build mesh for this voxel group (deduplicated vertices)
             Mesh sub = BuildSubMesh(verts, tris, triIndices);
+            if (sub == null) continue;
             decompData.AddMesh(sub);
 
             created++;
@@ -158,7 +159,7 @@ public class DecompositionColliderCreator : ColliderCreator<DecompositionCollide
     {
         // Map old vertex index -> new vertex index
         var map = new Dictionary<int, int>(triangleIndices.Count * 3);
-        var newVerts = new List<VertexData>(triangleIndices.Count * 3);
+        var newVerts = new List<Vector3>(triangleIndices.Count * 3);
         var newTris = new List<int>(triangleIndices.Count * 3);
 
         for (int k = 0; k < triangleIndices.Count; k++)
@@ -172,17 +173,20 @@ public class DecompositionColliderCreator : ColliderCreator<DecompositionCollide
             newTris.Add(RemappedIndex(b, verts, map, newVerts));
             newTris.Add(RemappedIndex(c, verts, map, newVerts));
         }
+        if (newVerts.Count == 0 || newTris.Count == 0)
+        {
+            Debug.LogWarning("BuildSubMesh: No vertices or triangles in this voxel.");
+            return null;
+        }
 
         var m = new Mesh();
         // If you expect large meshes per voxel:
         if (newVerts.Count > 65535)
             m.indexFormat = IndexFormat.UInt32;
-
-        m.SetVertexBufferParams(newVerts.Count, 
-            new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3) );
-        m.SetIndexBufferParams(newTris.Count, IndexFormat.UInt32);
-        m.SetIndexBufferData(newTris, 0, 0, newTris.Count);
-        m.SetVertexBufferData(newVerts, 0, 0, newVerts.Count);
+        
+        m.SetVertices(newVerts);
+        m.SetTriangles(newTris, 0);
+        
         
         m.RecalculateBounds();
 
@@ -192,14 +196,14 @@ public class DecompositionColliderCreator : ColliderCreator<DecompositionCollide
         return m;
     }
 
-    private static int RemappedIndex(int oldIndex, IList<Vector3> verts, Dictionary<int, int> map, List<VertexData> newVerts)
+    private static int RemappedIndex(int oldIndex, IList<Vector3> verts, Dictionary<int, int> map, List<Vector3> newVerts)
     {
         if (map.TryGetValue(oldIndex, out int newIndex))
             return newIndex;
 
         newIndex = newVerts.Count;
         map.Add(oldIndex, newIndex);
-        newVerts.Add(new VertexData { position = verts[oldIndex] });
+        newVerts.Add(verts[oldIndex]);
         return newIndex;
     }
 
@@ -240,6 +244,9 @@ public class DecompositionColliderData : ColliderData {
 }
 
 public class DecompositionUserSettings : UserSettings {
+    public DecompositionUserSettings() {
+        colliderType = ColliderType.Decomposition;
+    }
     [Header("Decomposition Settings")]
     public bool useBoxesPerEdge = false;
     public float spacingWorld = 0.1f;
