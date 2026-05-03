@@ -46,10 +46,13 @@ public class DecompositionColliderCreator : ColliderCreator<DecompositionCollide
         float sx = Mathf.Max(1e-8f, Mathf.Abs(ls.x));
         float sy = Mathf.Max(1e-8f, Mathf.Abs(ls.y));
         float sz = Mathf.Max(1e-8f, Mathf.Abs(ls.z));
-
-        Vector3 spacingLocal = new Vector3(decompSettings.spacingWorld / sx, decompSettings.spacingWorld / sy, decompSettings.spacingWorld / sz);
+        //spaceLocal = worldspace/worldscale (.1f) / .5f)
+        //spaceLocal = (.2f, .1f, .2f)
+        //.1f, .1f, .1f
+        Vector3 spacingLocal = new Vector3(decompSettings.spacingWorld / sx, decompSettings.spacingWorld / sy, decompSettings.spacingWorld / sz); 
         Vector3 paddingLocal = new Vector3(decompSettings.boundsPaddingWorld / sx, decompSettings.boundsPaddingWorld / sy, decompSettings.boundsPaddingWorld / sz);
         Bounds b = new Bounds(Bounds.center, Bounds.size);
+        
         b.Expand(paddingLocal * 2f);
 
         Vector3 minL = b.min;
@@ -62,9 +65,14 @@ public class DecompositionColliderCreator : ColliderCreator<DecompositionCollide
             nz = decompSettings.boxesPerEdge;
             spacingLocal = new Vector3(sizeL.x / nx, sizeL.y / ny, sizeL.z / nz);
         } else {
+            // nx = size / spaceing
+            //nx = boundsize / .2f
+            // 
             nx = Mathf.Max(1, Mathf.CeilToInt(sizeL.x / spacingLocal.x));
             ny = Mathf.Max(1, Mathf.CeilToInt(sizeL.y / spacingLocal.y));
             nz = Mathf.Max(1, Mathf.CeilToInt(sizeL.z / spacingLocal.z));
+
+            Debug.Log($"Calculated grid dimensions: {nx} x {ny} x {nz} = {nx*ny*nz} voxels, Size: {sizeL}, Spacing: {spacingLocal}");
         }
         
 
@@ -73,6 +81,8 @@ public class DecompositionColliderCreator : ColliderCreator<DecompositionCollide
 
         // Assign triangles to voxels (by triangle AABB overlap)
         int triCount = tris.Count / 3;
+        Vector3 allTriMin = Vector3.positiveInfinity;
+        Vector3 allTriMax = Vector3.negativeInfinity;
         for (int ti = 0; ti < triCount; ti++)
         {
             int i0 = tris[ti * 3 + 0];
@@ -85,11 +95,15 @@ public class DecompositionColliderCreator : ColliderCreator<DecompositionCollide
 
             Vector3 triMin = Vector3.Min(p0, Vector3.Min(p1, p2));
             Vector3 triMax = Vector3.Max(p0, Vector3.Max(p1, p2));
+            allTriMin = Vector3.Min(allTriMin, triMin);
+            allTriMax = Vector3.Max(allTriMax, triMax);
 
             // Clamp triangle AABB to grid bounds to avoid negative/out-of-range indices
+            
             triMin = Vector3.Max(triMin, minL);
+            
             triMax = Vector3.Min(triMax, maxL);
-
+            
             // Convert AABB to voxel index range
             int x0 = Mathf.Clamp(WorldToCell(triMin.x, minL.x, spacingLocal.x), 0, nx - 1);
             int y0 = Mathf.Clamp(WorldToCell(triMin.y, minL.y, spacingLocal.y), 0, ny - 1);
@@ -112,7 +126,7 @@ public class DecompositionColliderCreator : ColliderCreator<DecompositionCollide
                         list.Add(ti);
                     }
         }
-
+        // Debug.Log($"Triangle assignment to voxels complete. Total triangles: {triCount}, Triangles min: {allTriMin}, max: {allTriMax}, local min: {minL}, max: {maxL}");
         // Create output root
     
 
@@ -129,6 +143,9 @@ public class DecompositionColliderCreator : ColliderCreator<DecompositionCollide
             {
                 skippedSmall++;
                 continue;
+            }
+            if(triInVoxel > triCount / 3 * 2) {
+                continue; // skip voxels with too many triangles, likely due to bad bounds or spacing settings
             }
 
             if (triInVoxel > decompSettings.warnIfTrianglesPerVoxelAbove)
@@ -147,6 +164,7 @@ public class DecompositionColliderCreator : ColliderCreator<DecompositionCollide
 
             created++;
         }
+        Debug.Log($"DecompositionColliderCreator: Created {created} colliders, skipped {skippedSmall} small voxels, total voxels with triangles: {buckets.Count}");
     }
 
     private static int WorldToCell(float p, float min, float cell)
