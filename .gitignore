@@ -1,0 +1,3 @@
+*.meta
+*.meta
+!*.asmdef.meta
